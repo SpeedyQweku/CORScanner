@@ -1,4 +1,4 @@
-module github.com/SpeedyQweku/CORScanner
+module github.com/SpeedyQweku/CORSchecker
 
 go 1.22.4
 

@@ -258,16 +258,24 @@ func main() {
 		fmt.Println(string(jsonResult))
 	}
 
-	// Write results to files
-	writeResultsToFile("null_origin_vulnerabilities.json", nullOriginResults)
-	writeResultsToFile("wildcard_origin_vulnerabilities.json", wildcardOriginResults)
-	writeResultsToFile("domain_origin_vulnerabilities.json", domainOriginResults)
-	writeResultsToFile("different_domain_origin_vulnerabilities.json", differentDomainResults)
-
-	// Print the results notification
-	fmt.Println("\n[-] Results are saved in 4 files:")
-	fmt.Println("\tnull_origin_vulnerabilities.json")
-	fmt.Println("\twildcard_origin_vulnerabilities.json")
-	fmt.Println("\tdomain_origin_vulnerabilities.json")
-	fmt.Println("\tdifferent_domain_origin_vulnerabilities.json")
+	// Write results to files and Print the results notification
+	if len(nullOriginResults) > 0 || len(wildcardOriginResults) > 0 || len(domainOriginResults) > 0 || len(differentDomainResults) > 0 {
+		fmt.Println("\n[-] Results are saved in the files below:")
+	}
+	if len(nullOriginResults) > 0 {
+		writeResultsToFile("null_origin_vulnerabilities.json", nullOriginResults)
+		fmt.Println("\tnull_origin_vulnerabilities.json")
+	}
+	if len(wildcardOriginResults) > 0 {
+		writeResultsToFile("wildcard_origin_vulnerabilities.json", wildcardOriginResults)
+		fmt.Println("\twildcard_origin_vulnerabilities.json")
+	}
+	if len(domainOriginResults) > 0 {
+		writeResultsToFile("domain_origin_vulnerabilities.json", domainOriginResults)
+		fmt.Println("\tdomain_origin_vulnerabilities.json")
+	}
+	if len(differentDomainResults) > 0 {
+		writeResultsToFile("different_domain_origin_vulnerabilities.json", differentDomainResults)
+		fmt.Println("\tdifferent_domain_origin_vulnerabilities.json")
+	}
 }
