@@ -1,6 +1,6 @@
-# CORScanner
+# CORSchecker
 
-CORScanner checks if a url is vulnerable to Cross-Origin Resource Sharing (CORS)
+CORSchecker checks if a url is vulnerable to Cross-Origin Resource Sharing (CORS)
 
 ## Installation
 
@@ -11,5 +11,5 @@ go install github.com/SpeedyQweku/CORSchecker@latest
 ## Usage
 
 ```bash
-CORScanner -f [urls.txt]
+CORSchecker -f [urls.txt]
 ```
