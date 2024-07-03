@@ -11,9 +11,17 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/net/publicsuffix"
 )
+
+const banner = `  ____ ___  ____  ____       _               _             
+ / ___/ _ \|  _ \/ ___|  ___| |__   ___  ___| | _____ _ __ 
+| |  | | | | |_) \___ \ / __| '_ \ / _ \/ __| |/ / _ \ '__|
+| |__| |_| |  _ < ___) | (__| | | |  __/ (__|   <  __/ |   
+ \____\___/|_| \_\____/ \___|_| |_|\___|\___|_|\_\___|_|   @7knights
+`
 
 type CORSConfig struct {
 	AllowOrigins     []string `json:"allowOrigins"`
@@ -39,19 +47,21 @@ func parseHeader(header string) []string {
 	return strings.Split(header, ",")
 }
 
-func checkCORS(url string, results chan CORSResult) {
-	client := &http.Client{}
+func checkCORS(url string, results chan<- CORSResult) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		// fmt.Printf("Error creating request for URL %s: %v\n", url, err)
+		// fmt.Printf("❌ Error creating request for URL %s: %v\n", url, err)
 		return
 	}
 
-	fmt.Printf("[>] Making request to URL: %s\n", url)
+	fmt.Printf("🌐 Checking URL -> %s\n", url)
 	req.Header.Set("Origin", "null")
 	resp, err := client.Do(req)
 	if err != nil {
-		// fmt.Printf("Error making request to URL %s: %v\n", url, err)
+		// fmt.Printf("❌ Error making request to URL %s: %v\n", url, err)
 		return
 	}
 	defer resp.Body.Close()
@@ -82,17 +92,16 @@ func checkCORS(url string, results chan CORSResult) {
 	}
 
 	if !vulnerable {
-		// Try with a different origin if the initial check doesn't find any vulnerabilities
 		req, err = http.NewRequest("GET", url, nil)
 		if err != nil {
-			// fmt.Printf("Error creating request for URL %s: %v\n", url, err)
+			// fmt.Printf("❌ Error creating request for URL %s: %v\n", url, err)
 			return
 		}
 
 		req.Header.Set("Origin", "http://example.com")
 		resp, err = client.Do(req)
 		if err != nil {
-			// fmt.Printf("Error making request to URL %s: %v\n", url, err)
+			// fmt.Printf("❌ Error making request to URL %s: %v\n", url, err)
 			return
 		}
 		defer resp.Body.Close()
@@ -111,23 +120,22 @@ func checkCORS(url string, results chan CORSResult) {
 	}
 
 	if !vulnerable {
-		// Try with the domain origin if the previous checks don't find any vulnerabilities
 		u, err := neturl.Parse(url)
 		if err != nil {
-			// fmt.Printf("Error parsing URL %s: %v\n", url, err)
+			// fmt.Printf("❌ Error parsing URL %s: %v\n", url, err)
 			return
 		}
 
 		req, err = http.NewRequest("GET", url, nil)
 		if err != nil {
-			// fmt.Printf("Error creating request for URL %s: %v\n", url, err)
+			// fmt.Printf("❌ Error creating request for URL %s: %v\n", url, err)
 			return
 		}
 
 		req.Header.Set("Origin", u.Scheme+"://"+u.Host)
 		resp, err = client.Do(req)
 		if err != nil {
-			// fmt.Printf("Error making request to URL %s: %v\n", url, err)
+			// fmt.Printf("❌ Error making request to URL %s: %v\n", url, err)
 			return
 		}
 		defer resp.Body.Close()
@@ -161,7 +169,7 @@ func checkCORS(url string, results chan CORSResult) {
 func writeResultsToFile(filename string, results []CORSResult) {
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Printf("Error creating file %s: %v\n", filename, err)
+		fmt.Printf("❌ Error creating file %s: %v\n", filename, err)
 		return
 	}
 	defer file.Close()
@@ -172,7 +180,7 @@ func writeResultsToFile(filename string, results []CORSResult) {
 	_, _ = file.WriteString("[\n")
 	for i, result := range results {
 		if err := encoder.Encode(result); err != nil {
-			fmt.Printf("Error encoding result: %v\n", err)
+			fmt.Printf("❌ Error encoding result: %v\n", err)
 			continue
 		}
 		if i < len(results)-1 {
@@ -183,12 +191,11 @@ func writeResultsToFile(filename string, results []CORSResult) {
 }
 
 func main() {
-	// Define command-line flags
+	fmt.Printf("%s\n",banner)
 	filePath := flag.String("f", "", "Path to the file containing URLs")
 	concurrency := flag.Int("c", 70, "Number of concurrent workers")
 	flag.Parse()
 
-	// Check if file path is provided
 	if *filePath == "" {
 		flag.Usage()
 		os.Exit(1)
@@ -196,7 +203,7 @@ func main() {
 
 	urls, err := ioutil.ReadFile(*filePath)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		fmt.Println("❌ Error reading file:", err)
 		os.Exit(1)
 	}
 
@@ -206,7 +213,6 @@ func main() {
 	results := make(chan CORSResult, len(urlList))
 	urlChan := make(chan string, len(urlList))
 
-	// Start workers
 	for i := 0; i < *concurrency; i++ {
 		wg.Add(1)
 		go func() {
@@ -252,30 +258,31 @@ func main() {
 		}
 		jsonResult, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			fmt.Println("Error marshaling result:", err)
+			// fmt.Println("❌ Error marshaling result:", err)
 			continue
 		}
 		fmt.Println(string(jsonResult))
 	}
 
-	// Write results to files and Print the results notification
 	if len(nullOriginResults) > 0 || len(wildcardOriginResults) > 0 || len(domainOriginResults) > 0 || len(differentDomainResults) > 0 {
-		fmt.Println("\n[-] Results are saved in the files below:")
+		fmt.Println("\n💾💾 Results are saved in the files below: 💾💾")
+	} else {
+		fmt.Println("\n😔😔 Better luck next time... 😔😔")
 	}
 	if len(nullOriginResults) > 0 {
 		writeResultsToFile("null_origin_vulnerabilities.json", nullOriginResults)
-		fmt.Println("\tnull_origin_vulnerabilities.json")
+		fmt.Println("\t📁 null_origin_vulnerabilities.json")
 	}
 	if len(wildcardOriginResults) > 0 {
 		writeResultsToFile("wildcard_origin_vulnerabilities.json", wildcardOriginResults)
-		fmt.Println("\twildcard_origin_vulnerabilities.json")
+		fmt.Println("\t📁 wildcard_origin_vulnerabilities.json")
 	}
 	if len(domainOriginResults) > 0 {
 		writeResultsToFile("domain_origin_vulnerabilities.json", domainOriginResults)
-		fmt.Println("\tdomain_origin_vulnerabilities.json")
+		fmt.Println("\t📁 domain_origin_vulnerabilities.json")
 	}
 	if len(differentDomainResults) > 0 {
 		writeResultsToFile("different_domain_origin_vulnerabilities.json", differentDomainResults)
-		fmt.Println("\tdifferent_domain_origin_vulnerabilities.json")
+		fmt.Println("\t📁 different_domain_origin_vulnerabilities.json")
 	}
 }
