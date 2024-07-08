@@ -13,3 +13,11 @@ go install github.com/SpeedyQweku/CORSchecker@v0.0.2
 ```bash
 CORSchecker -f [urls.txt]
 ```
+
+## POC
+
+In the poc folder run
+
+```bash
+python -m http.server 5555                             
+```
