@@ -47,9 +47,9 @@ func parseHeader(header string) []string {
 	return strings.Split(header, ",")
 }
 
-func checkCORS(url string, results chan<- CORSResult) {
+func checkCORS(url string, to int64, results chan<- CORSResult) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: time.Duration(to) * time.Second,
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -194,6 +194,7 @@ func main() {
 	fmt.Printf("%s\n",banner)
 	filePath := flag.String("f", "", "Path to the file containing URLs")
 	concurrency := flag.Int("c", 70, "Number of concurrent workers")
+	timeout := flag.Int64("to", 10, "Timeout[s]")
 	flag.Parse()
 
 	if *filePath == "" {
@@ -219,7 +220,7 @@ func main() {
 			defer wg.Done()
 			for url := range urlChan {
 				if url != "" {
-					checkCORS(url, results)
+					checkCORS(url, *timeout, results)
 				}
 			}
 		}()
